@@ -1,5 +1,6 @@
 import socket
 import threading
+import datetime
 
 def handle_client_connection(conn, addr, clients):
     print(f"Verbunden mit: {addr[0]}:{addr[1]}")
@@ -13,16 +14,29 @@ def handle_client_connection(conn, addr, clients):
                 break
             message = data.decode()
             print(f"{clients[conn]}: {message}")
-            # Weiterleiten der Nachricht an alle anderen verbundenen Clients
+
+            # Get the current timestamp (hour:minute)
+            current_time = datetime.datetime.now().strftime("%H:%M")
+
+            # Weiterleiten der Nachricht an alle anderen verbundenen Clients mit Uhrzeit
             for client, name in clients.items():
                 if client != conn:
-                    client.sendall(f"[{clients[conn]}]: {message}".encode())
+                    client.sendall(f"[{current_time}] [{clients[conn]}]: {message}".encode())
     except:
         pass
 
     print(f"Verbindung zu {addr[0]}:{addr[1]} geschlossen.")
     del clients[conn]
     conn.close()
+
+def send_server_message(server_socket, clients):
+    while True:
+        message = input("Server: ")
+        # Get the current timestamp (hour:minute)
+        current_time = datetime.datetime.now().strftime("%H:%M")
+        # Weiterleiten der Nachricht an alle verbundenen Clients mit Uhrzeit
+        for client, name in clients.items():
+            client.sendall(f"[{current_time}] Server: {message}".encode())
 
 def start_server():
     host = "0.0.0.0"  # Server lauscht auf allen verfügbaren IP-Adressen
@@ -37,6 +51,9 @@ def start_server():
     connected_clients = {}  # Wörterbuch zum Speichern der verbundenen Clients und Benutzernamen
 
     try:
+        server_thread = threading.Thread(target=send_server_message, args=(server_socket, connected_clients))
+        server_thread.start()
+
         while True:
             conn, addr = server_socket.accept()
             client_thread = threading.Thread(target=handle_client_connection, args=(conn, addr, connected_clients))
