@@ -58,16 +58,23 @@ def start_client():
     # GUI erstellen
     root = tk.Tk()
     root.title("Chat Client")
-    root.geometry("400x400")
+    root.geometry("400x500")  # Höhe erhöht, um Platz für die Benutzerliste zu schaffen
 
     # Chat-Area erstellen
-    chat_area = scrolledtext.ScrolledText(root, wrap=tk.WORD, state=tk.DISABLED)
+    chat_area = scrolledtext.ScrolledText(root, wrap=tk.WORD, state=tk.DISABLED, font=("Helvetica", 12))
     chat_area.pack(expand=True, fill=tk.BOTH)
 
     # Eingabefeld für Chat erstellen
-    input_entry = tk.Entry(root)
+    input_entry = tk.Entry(root, font=("Helvetica", 12))
     input_entry.pack(expand=True, fill=tk.X, side=tk.BOTTOM)
     input_entry.bind("<Return>", send_message)
+
+    # Benutzerliste erstellen
+    user_list_label = tk.Label(root, text="Benutzerliste:", font=("Helvetica", 12, "bold"))
+    user_list_label.pack(anchor=tk.W, padx=10, pady=(5, 0))
+
+    user_list = tk.Listbox(root, font=("Helvetica", 12), selectbackground="#f2f2f2", selectforeground="black")
+    user_list.pack(expand=True, fill=tk.BOTH, padx=10, pady=5)
 
     # Thread für das Empfangen von Nachrichten vom Server starten
     receive_thread = threading.Thread(target=receive_messages, args=(client_socket,))

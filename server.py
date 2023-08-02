@@ -27,7 +27,7 @@ def handle_client_connection(conn, addr, clients):
             for client, name in clients.items():
                 if client != conn:
                     client.sendall(f"[{current_time}] [{clients[conn]}]: {message}".encode())
-            
+
             # Speichern der Nachricht in der Datei
             with open(MESSAGE_FILE, "a") as file:
                 file.write(f"[{current_time}] [{clients[conn]}]: {message}\n")
@@ -47,13 +47,20 @@ def send_server_message(server_socket, clients):
         for client, name in clients.items():
             client.sendall(f"[{current_time}] Server: {message}".encode())
 
+def send_user_list(client_socket, clients):
+    try:
+        user_list = "\n".join(clients.values())
+        client_socket.sendall(f"[Server]: Aktive Benutzer:\n{user_list}\n".encode())
+    except:
+        pass
+
 def start_server():
     host = "0.0.0.0"  # Server lauscht auf allen verfügbaren IP-Adressen
     port = 12345    # Portnummer, auf dem der Server lauscht
 
     # Reset the message file at the start of the server
     with open(MESSAGE_FILE, "w") as file:
-        file.write("")
+        file.write("Chatstart")
 
     server_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
     server_socket.bind((host, port))
@@ -71,6 +78,11 @@ def start_server():
             conn, addr = server_socket.accept()
             client_thread = threading.Thread(target=handle_client_connection, args=(conn, addr, connected_clients))
             client_thread.start()
+
+            # Thread für das Senden der Benutzerliste an den neuen Client starten
+            user_list_thread = threading.Thread(target=send_user_list, args=(conn, connected_clients))
+            user_list_thread.start()
+
     except KeyboardInterrupt:
         # Bei einem Tastenabbruch (z. B. durch CTRL+C) den Server beenden
         pass
