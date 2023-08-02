@@ -3,6 +3,7 @@ import socket
 import threading
 import tkinter as tk
 from tkinter import scrolledtext
+import datetime
 
 USERNAME_FILE = "username.txt"
 
@@ -29,7 +30,12 @@ def receive_messages(client_socket):
 def send_message(event=None):
     message = input_entry.get()
     chat_area.configure(state=tk.NORMAL)  # Enable the chat_area for editing
-    chat_area.insert(tk.END, f"[{username}]: {message}\n")  # Nachricht im Chatfenster anzeigen
+
+    # Get the current timestamp (hour:minute)
+    current_time = datetime.datetime.now().strftime("%H:%M")
+    formatted_message = f"[{current_time}] [{username}]: {message}"
+
+    chat_area.insert(tk.END, formatted_message + "\n")  # Nachricht im Chatfenster anzeigen
     chat_area.configure(state=tk.DISABLED)  # Disable the chat_area after updating
     client_socket.sendall(message.encode())
     input_entry.delete(0, tk.END)

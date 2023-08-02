@@ -2,12 +2,17 @@ import socket
 import threading
 import datetime
 
+MESSAGE_FILE = "messages.txt"
+
 def handle_client_connection(conn, addr, clients):
     print(f"Verbunden mit: {addr[0]}:{addr[1]}")
     username = conn.recv(1024).decode()
     clients[conn] = username
 
     try:
+        # Send the message history to the newly connected client
+        send_message_history(conn)
+
         while True:
             data = conn.recv(1024)
             if not data:
@@ -22,6 +27,10 @@ def handle_client_connection(conn, addr, clients):
             for client, name in clients.items():
                 if client != conn:
                     client.sendall(f"[{current_time}] [{clients[conn]}]: {message}".encode())
+            
+            # Speichern der Nachricht in der Datei
+            with open(MESSAGE_FILE, "a") as file:
+                file.write(f"[{current_time}] [{clients[conn]}]: {message}\n")
     except:
         pass
 
@@ -41,6 +50,10 @@ def send_server_message(server_socket, clients):
 def start_server():
     host = "0.0.0.0"  # Server lauscht auf allen verfügbaren IP-Adressen
     port = 12345    # Portnummer, auf dem der Server lauscht
+
+    # Reset the message file at the start of the server
+    with open(MESSAGE_FILE, "w") as file:
+        file.write("")
 
     server_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
     server_socket.bind((host, port))
@@ -65,6 +78,14 @@ def start_server():
         # Socket schließen, wenn der Server beendet wird
         server_socket.close()
         print("Server gestoppt. Ports wurden geschlossen.")
+
+def send_message_history(conn):
+    try:
+        with open(MESSAGE_FILE, "r") as file:
+            messages = file.readlines()
+            conn.sendall("".join(messages).encode())
+    except:
+        pass
 
 if __name__ == "__main__":
     start_server()
