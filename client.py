@@ -26,11 +26,12 @@ def receive_messages(client_socket, chat_area):
 
 def send_message(event=None):
     message = input_entry.get()
+    chat_area.insert(tk.END, f"[{username}]: {message}\n")  # Nachricht im Chatfenster anzeigen
     client_socket.sendall(message.encode())
     input_entry.delete(0, tk.END)
 
 def start_client():
-    global client_socket, input_entry
+    global client_socket, input_entry, chat_area, username
 
     host = "10.10.10.199"  # Server-IP-Adresse
     port = 12345           # Portnummer, auf dem der Server lauscht
