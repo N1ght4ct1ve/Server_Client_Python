@@ -27,16 +27,25 @@ def handle_client_connection(conn, addr, clients):
             for client, name in clients.items():
                 if client != conn:
                     client.sendall(f"[{current_time}] [{clients[conn]}]: {message}".encode())
-
+            
             # Speichern der Nachricht in der Datei
             with open(MESSAGE_FILE, "a") as file:
                 file.write(f"[{current_time}] [{clients[conn]}]: {message}\n")
+
+            # Aktive Benutzerliste an alle Clients senden
+            active_users = get_active_users(clients)
+            user_list_message = "[Server]: Aktive Benutzer:\n" + "\n".join(active_users)
+            for client in clients:
+                client.sendall(user_list_message.encode())
     except:
         pass
 
     print(f"Verbindung zu {addr[0]}:{addr[1]} geschlossen.")
     del clients[conn]
     conn.close()
+
+def get_active_users(clients):
+    return [username for client, username in clients.items()]
 
 def send_server_message(server_socket, clients):
     while True:
@@ -46,13 +55,6 @@ def send_server_message(server_socket, clients):
         # Weiterleiten der Nachricht an alle verbundenen Clients mit Uhrzeit
         for client, name in clients.items():
             client.sendall(f"[{current_time}] Server: {message}".encode())
-
-def send_user_list(client_socket, clients):
-    try:
-        user_list = "\n".join(clients.values())
-        client_socket.sendall(f"[Server]: Aktive Benutzer:\n{user_list}\n".encode())
-    except:
-        pass
 
 def start_server():
     host = "0.0.0.0"  # Server lauscht auf allen verfügbaren IP-Adressen
@@ -78,11 +80,6 @@ def start_server():
             conn, addr = server_socket.accept()
             client_thread = threading.Thread(target=handle_client_connection, args=(conn, addr, connected_clients))
             client_thread.start()
-
-            # Thread für das Senden der Benutzerliste an den neuen Client starten
-            user_list_thread = threading.Thread(target=send_user_list, args=(conn, connected_clients))
-            user_list_thread.start()
-
     except KeyboardInterrupt:
         # Bei einem Tastenabbruch (z. B. durch CTRL+C) den Server beenden
         pass

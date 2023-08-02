@@ -21,11 +21,19 @@ def receive_messages(client_socket):
     while True:
         try:
             message = client_socket.recv(1024).decode()
-            chat_area.configure(state=tk.NORMAL)  # Enable the chat_area for editing
-            chat_area.insert(tk.END, message + "\n")
-            chat_area.configure(state=tk.DISABLED)  # Disable the chat_area after updating
+            if message.startswith("[Server]: Aktive Benutzer:"):
+                update_user_list(message.splitlines()[1:])  # Benutzerliste aktualisieren
+            else:
+                chat_area.configure(state=tk.NORMAL)  # Enable the chat_area for editing
+                chat_area.insert(tk.END, message + "\n")
+                chat_area.configure(state=tk.DISABLED)  # Disable the chat_area after updating
         except:
             break
+
+def update_user_list(users):
+    user_list.delete(0, tk.END)  # Vorherige Liste löschen
+    for user in users:
+        user_list.insert(tk.END, user)
 
 def send_message(event=None):
     message = input_entry.get()
@@ -41,7 +49,7 @@ def send_message(event=None):
     input_entry.delete(0, tk.END)
 
 def start_client():
-    global client_socket, input_entry, chat_area, username
+    global client_socket, input_entry, chat_area, username, user_list
 
     host = "10.10.10.199"  # Server-IP-Adresse
     port = 12345           # Portnummer, auf dem der Server lauscht
