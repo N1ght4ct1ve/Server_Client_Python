@@ -16,17 +16,21 @@ def read_username():
             file.write(username)
     return username
 
-def receive_messages(client_socket, chat_area):
+def receive_messages(client_socket):
     while True:
         try:
             message = client_socket.recv(1024).decode()
+            chat_area.configure(state=tk.NORMAL)  # Enable the chat_area for editing
             chat_area.insert(tk.END, message + "\n")
+            chat_area.configure(state=tk.DISABLED)  # Disable the chat_area after updating
         except:
             break
 
 def send_message(event=None):
     message = input_entry.get()
+    chat_area.configure(state=tk.NORMAL)  # Enable the chat_area for editing
     chat_area.insert(tk.END, f"[{username}]: {message}\n")  # Nachricht im Chatfenster anzeigen
+    chat_area.configure(state=tk.DISABLED)  # Disable the chat_area after updating
     client_socket.sendall(message.encode())
     input_entry.delete(0, tk.END)
 
@@ -60,7 +64,7 @@ def start_client():
     input_entry.bind("<Return>", send_message)
 
     # Thread für das Empfangen von Nachrichten vom Server starten
-    receive_thread = threading.Thread(target=receive_messages, args=(client_socket, chat_area))
+    receive_thread = threading.Thread(target=receive_messages, args=(client_socket,))
     receive_thread.start()
 
     root.mainloop()
